@@ -1,0 +1,618 @@
+<!doctype html>
+<html>
+<head>
+<meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'>
+
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,700,400&subset=latin,latin-ext' rel='stylesheet' type='text/css' /><style type='text/css'>html {overflow-x: initial !important;}:root { --bg-color: #ffffff; --text-color: #333333; --select-text-bg-color: #B5D6FC; --select-text-font-color: auto; --monospace: "Lucida Console",Consolas,"Courier",monospace; --title-bar-height: 20px; }
+.mac-os-11 { --title-bar-height: 28px; }
+html { font-size: 14px; background-color: var(--bg-color); color: var(--text-color); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4, h5 { white-space: pre-wrap; }
+body { margin: 0px; padding: 0px; height: auto; inset: 0px; font-size: 1rem; line-height: 1.42857; overflow-x: hidden; background: inherit; }
+iframe { margin: auto; }
+a.url { word-break: break-all; }
+a:active, a:hover { outline: 0px; }
+.in-text-selection, ::selection { text-shadow: none; background: var(--select-text-bg-color); color: var(--select-text-font-color); }
+#write { margin: 0px auto; height: auto; width: inherit; word-break: normal; overflow-wrap: break-word; position: relative; white-space: normal; overflow-x: visible; padding-top: 36px; }
+#write.first-line-indent p { text-indent: 2em; }
+#write.first-line-indent li p, #write.first-line-indent p * { text-indent: 0px; }
+#write.first-line-indent li { margin-left: 2em; }
+.for-image #write { padding-left: 8px; padding-right: 8px; }
+body.typora-export { padding-left: 30px; padding-right: 30px; }
+.typora-export .footnote-line, .typora-export li, .typora-export p { white-space: pre-wrap; }
+.typora-export .task-list-item input { pointer-events: none; }
+@media screen and (max-width: 500px) {
+  body.typora-export { padding-left: 0px; padding-right: 0px; }
+  #write { padding-left: 20px; padding-right: 20px; }
+}
+#write li > figure:last-child { margin-bottom: 0.5rem; }
+#write ol, #write ul { position: relative; }
+img { max-width: 100%; vertical-align: middle; image-orientation: from-image; }
+button, input, select, textarea { color: inherit; font: inherit; }
+input[type="checkbox"], input[type="radio"] { line-height: normal; padding: 0px; }
+*, ::after, ::before { box-sizing: border-box; }
+#write h1, #write h2, #write h3, #write h4, #write h5, #write h6, #write p, #write pre { width: inherit; position: relative; }
+#write svg h1, #write svg h2, #write svg h3, #write svg h4, #write svg h5, #write svg h6, #write svg p { position: static; }
+p { line-height: inherit; }
+h1, h2, h3, h4, h5, h6 { break-after: avoid-page; break-inside: avoid; orphans: 4; }
+p { orphans: 4; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.8rem; }
+h3 { font-size: 1.6rem; }
+h4 { font-size: 1.4rem; }
+h5 { font-size: 1.2rem; }
+h6 { font-size: 1rem; }
+.md-math-block, .md-rawblock, h1, h2, h3, h4, h5, h6, p { margin-top: 1rem; margin-bottom: 1rem; }
+.hidden { display: none; }
+.md-blockmeta { color: rgb(204, 204, 204); font-weight: 700; font-style: italic; }
+a { cursor: pointer; }
+sup.md-footnote { padding: 2px 4px; background-color: rgba(238, 238, 238, 0.7); color: rgb(85, 85, 85); border-radius: 4px; cursor: pointer; }
+sup.md-footnote a, sup.md-footnote a:hover { color: inherit; text-transform: inherit; text-decoration: inherit; }
+#write input[type="checkbox"] { cursor: pointer; width: inherit; height: inherit; }
+figure { overflow-x: auto; margin: 1.2em 0px; max-width: calc(100% + 16px); padding: 0px; }
+figure > table { margin: 0px; }
+thead, tr { break-inside: avoid; break-after: auto; }
+thead { display: table-header-group; }
+table { border-collapse: collapse; border-spacing: 0px; width: 100%; overflow: auto; break-inside: auto; text-align: left; }
+table.md-table td { min-width: 32px; }
+.CodeMirror-gutters { border-right: 0px; background-color: inherit; }
+.CodeMirror-linenumber { user-select: none; }
+.CodeMirror { text-align: left; }
+.CodeMirror-placeholder { opacity: 0.3; }
+.CodeMirror pre { padding: 0px 4px; }
+.CodeMirror-lines { padding: 0px; }
+div.hr:focus { cursor: none; }
+#write pre { white-space: pre-wrap; }
+#write.fences-no-line-wrapping pre { white-space: pre; }
+#write pre.ty-contain-cm { white-space: normal; }
+.CodeMirror-gutters { margin-right: 4px; }
+.md-fences { font-size: 0.9rem; display: block; break-inside: avoid; text-align: left; overflow: visible; white-space: pre; background: inherit; position: relative !important; }
+.md-fences-adv-panel { width: 100%; margin-top: 10px; text-align: center; padding-top: 0px; padding-bottom: 8px; overflow-x: auto; }
+#write .md-fences.mock-cm { white-space: pre-wrap; }
+.md-fences.md-fences-with-lineno { padding-left: 0px; }
+#write.fences-no-line-wrapping .md-fences.mock-cm { white-space: pre; overflow-x: auto; }
+.md-fences.mock-cm.md-fences-with-lineno { padding-left: 8px; }
+.CodeMirror-line, twitterwidget { break-inside: avoid; }
+svg { break-inside: avoid; }
+.footnotes { opacity: 0.8; font-size: 0.9rem; margin-top: 1em; margin-bottom: 1em; }
+.footnotes + .footnotes { margin-top: 0px; }
+.md-reset { margin: 0px; padding: 0px; border: 0px; outline: 0px; vertical-align: top; background: 0px 0px; text-decoration: none; text-shadow: none; float: none; position: static; width: auto; height: auto; white-space: nowrap; cursor: inherit; -webkit-tap-highlight-color: transparent; line-height: normal; font-weight: 400; text-align: left; box-sizing: content-box; direction: ltr; }
+li div { padding-top: 0px; }
+blockquote { margin: 1rem 0px; }
+li .mathjax-block, li p { margin: 0.5rem 0px; }
+li blockquote { margin: 1rem 0px; }
+li { margin: 0px; position: relative; }
+blockquote > :last-child { margin-bottom: 0px; }
+blockquote > :first-child, li > :first-child { margin-top: 0px; }
+.footnotes-area { color: rgb(136, 136, 136); margin-top: 0.714rem; padding-bottom: 0.143rem; white-space: normal; }
+#write .footnote-line { white-space: pre-wrap; }
+@media print {
+  body, html { border: 1px solid transparent; height: 99%; break-after: avoid; break-before: avoid; font-variant-ligatures: no-common-ligatures; }
+  #write { margin-top: 0px; border-color: transparent !important; padding-top: 0px !important; padding-bottom: 0px !important; }
+  .typora-export * { -webkit-print-color-adjust: exact; }
+  .typora-export #write { break-after: avoid; }
+  .typora-export #write::after { height: 0px; }
+  .is-mac table { break-inside: avoid; }
+  #write > p:nth-child(1) { margin-top: 0px; }
+  .typora-export-show-outline .typora-export-sidebar { display: none; }
+  figure { overflow-x: visible; }
+}
+.footnote-line { margin-top: 0.714em; font-size: 0.7em; }
+a img, img a { cursor: pointer; }
+pre.md-meta-block { font-size: 0.8rem; min-height: 0.8rem; white-space: pre-wrap; background: rgb(204, 204, 204); display: block; overflow-x: hidden; }
+p > .md-image:only-child:not(.md-img-error) img, p > img:only-child { display: block; margin: auto; }
+#write.first-line-indent p > .md-image:only-child:not(.md-img-error) img { left: -2em; position: relative; }
+p > .md-image:only-child { display: inline-block; width: 100%; }
+#write .MathJax_Display { margin: 0.8em 0px 0px; }
+.md-math-block { width: 100%; }
+.md-math-block:not(:empty)::after { display: none; }
+.MathJax_ref { fill: currentcolor; }
+[contenteditable="true"]:active, [contenteditable="true"]:focus, [contenteditable="false"]:active, [contenteditable="false"]:focus { outline: 0px; box-shadow: none; }
+.md-task-list-item { position: relative; list-style-type: none; }
+.task-list-item.md-task-list-item { padding-left: 0px; }
+.md-task-list-item > input { position: absolute; top: 0px; left: 0px; margin-left: -1.2em; margin-top: calc(1em - 10px); border: none; }
+.math { font-size: 1rem; }
+.md-toc { min-height: 3.58rem; position: relative; font-size: 0.9rem; border-radius: 10px; }
+.md-toc-content { position: relative; margin-left: 0px; }
+.md-toc-content::after, .md-toc::after { display: none; }
+.md-toc-item { display: block; color: rgb(65, 131, 196); }
+.md-toc-item a { text-decoration: none; }
+.md-toc-inner:hover { text-decoration: underline; }
+.md-toc-inner { display: inline-block; cursor: pointer; }
+.md-toc-h1 .md-toc-inner { margin-left: 0px; font-weight: 700; }
+.md-toc-h2 .md-toc-inner { margin-left: 2em; }
+.md-toc-h3 .md-toc-inner { margin-left: 4em; }
+.md-toc-h4 .md-toc-inner { margin-left: 6em; }
+.md-toc-h5 .md-toc-inner { margin-left: 8em; }
+.md-toc-h6 .md-toc-inner { margin-left: 10em; }
+@media screen and (max-width: 48em) {
+  .md-toc-h3 .md-toc-inner { margin-left: 3.5em; }
+  .md-toc-h4 .md-toc-inner { margin-left: 5em; }
+  .md-toc-h5 .md-toc-inner { margin-left: 6.5em; }
+  .md-toc-h6 .md-toc-inner { margin-left: 8em; }
+}
+a.md-toc-inner { font-size: inherit; font-style: inherit; font-weight: inherit; line-height: inherit; }
+.footnote-line a:not(.reversefootnote) { color: inherit; }
+.reversefootnote { font-family: ui-monospace, sans-serif; }
+.md-attr { display: none; }
+.md-fn-count::after { content: "."; }
+code, pre, samp, tt { font-family: var(--monospace); }
+kbd { margin: 0px 0.1em; padding: 0.1em 0.6em; font-size: 0.8em; color: rgb(36, 39, 41); background: rgb(255, 255, 255); border: 1px solid rgb(173, 179, 185); border-radius: 3px; box-shadow: rgba(12, 13, 14, 0.2) 0px 1px 0px, rgb(255, 255, 255) 0px 0px 0px 2px inset; white-space: nowrap; vertical-align: middle; }
+.md-comment { color: rgb(162, 127, 3); opacity: 0.6; font-family: var(--monospace); }
+code { text-align: left; vertical-align: initial; }
+a.md-print-anchor { white-space: pre !important; border-width: initial !important; border-style: none !important; border-color: initial !important; display: inline-block !important; position: absolute !important; width: 1px !important; right: 0px !important; outline: 0px !important; background: 0px 0px !important; text-decoration: initial !important; text-shadow: initial !important; }
+.os-windows.monocolor-emoji .md-emoji { font-family: "Segoe UI Symbol", sans-serif; }
+.md-diagram-panel > svg { max-width: 100%; }
+[lang="flow"] svg, [lang="mermaid"] svg { max-width: 100%; height: auto; }
+[lang="mermaid"] .node text { font-size: 1rem; }
+table tr th { border-bottom: 0px; }
+video { max-width: 100%; display: block; margin: 0px auto; }
+iframe { max-width: 100%; width: 100%; border: none; }
+.highlight td, .highlight tr { border: 0px; }
+mark { background: rgb(255, 255, 0); color: rgb(0, 0, 0); }
+.md-html-inline .md-plain, .md-html-inline strong, mark .md-inline-math, mark strong { color: inherit; }
+.md-expand mark .md-meta { opacity: 0.3 !important; }
+mark .md-meta { color: rgb(0, 0, 0); }
+@media print {
+  .typora-export h1, .typora-export h2, .typora-export h3, .typora-export h4, .typora-export h5, .typora-export h6 { break-inside: avoid; }
+}
+.md-diagram-panel .messageText { stroke: none !important; }
+.md-diagram-panel .start-state { fill: var(--node-fill); }
+.md-diagram-panel .edgeLabel rect { opacity: 1 !important; }
+.md-fences.md-fences-math { font-size: 1em; }
+.md-fences-advanced:not(.md-focus) { padding: 0px; white-space: nowrap; border: 0px; }
+.md-fences-advanced:not(.md-focus) { background: inherit; }
+.mermaid-svg { margin: auto; }
+.typora-export-show-outline .typora-export-content { max-width: 1440px; margin: auto; display: flex; flex-direction: row; }
+.typora-export-sidebar { width: 300px; font-size: 0.8rem; margin-top: 80px; margin-right: 18px; }
+.typora-export-show-outline #write { --webkit-flex: 2; flex: 2 1 0%; }
+.typora-export-sidebar .outline-content { position: fixed; top: 0px; max-height: 100%; overflow: hidden auto; padding-bottom: 30px; padding-top: 60px; width: 300px; }
+@media screen and (max-width: 1024px) {
+  .typora-export-sidebar, .typora-export-sidebar .outline-content { width: 240px; }
+}
+@media screen and (max-width: 800px) {
+  .typora-export-sidebar { display: none; }
+}
+.outline-content li, .outline-content ul { margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; list-style: none; overflow-wrap: anywhere; }
+.outline-content ul { margin-top: 0px; margin-bottom: 0px; }
+.outline-content strong { font-weight: 400; }
+.outline-expander { width: 1rem; height: 1.42857rem; position: relative; display: table-cell; vertical-align: middle; cursor: pointer; padding-left: 4px; }
+.outline-expander::before { content: ""; position: relative; font-family: Ionicons; display: inline-block; font-size: 8px; vertical-align: middle; }
+.outline-item { padding-top: 3px; padding-bottom: 3px; cursor: pointer; }
+.outline-expander:hover::before { content: ""; }
+.outline-h1 > .outline-item { padding-left: 0px; }
+.outline-h2 > .outline-item { padding-left: 1em; }
+.outline-h3 > .outline-item { padding-left: 2em; }
+.outline-h4 > .outline-item { padding-left: 3em; }
+.outline-h5 > .outline-item { padding-left: 4em; }
+.outline-h6 > .outline-item { padding-left: 5em; }
+.outline-label { cursor: pointer; display: table-cell; vertical-align: middle; text-decoration: none; color: inherit; }
+.outline-label:hover { text-decoration: underline; }
+.outline-item:hover { border-color: rgb(245, 245, 245); background-color: var(--item-hover-bg-color); }
+.outline-item:hover { margin-left: -28px; margin-right: -28px; border-left: 28px solid transparent; border-right: 28px solid transparent; }
+.outline-item-single .outline-expander::before, .outline-item-single .outline-expander:hover::before { display: none; }
+.outline-item-open > .outline-item > .outline-expander::before { content: ""; }
+.outline-children { display: none; }
+.info-panel-tab-wrapper { display: none; }
+.outline-item-open > .outline-children { display: block; }
+.typora-export .outline-item { padding-top: 1px; padding-bottom: 1px; }
+.typora-export .outline-item:hover { margin-right: -8px; border-right: 8px solid transparent; }
+.typora-export .outline-expander::before { content: "+"; font-family: inherit; top: -1px; }
+.typora-export .outline-expander:hover::before, .typora-export .outline-item-open > .outline-item > .outline-expander::before { content: "−"; }
+.typora-export-collapse-outline .outline-children { display: none; }
+.typora-export-collapse-outline .outline-item-open > .outline-children, .typora-export-no-collapse-outline .outline-children { display: block; }
+.typora-export-no-collapse-outline .outline-expander::before { content: "" !important; }
+.typora-export-show-outline .outline-item-active > .outline-item .outline-label { font-weight: 700; }
+.md-inline-math-container mjx-container { zoom: 0.95; }
+mjx-container { break-inside: avoid; }
+.md-alert.md-alert-note { border-left-color: rgb(9, 105, 218); }
+.md-alert.md-alert-important { border-left-color: rgb(130, 80, 223); }
+.md-alert.md-alert-warning { border-left-color: rgb(154, 103, 0); }
+.md-alert.md-alert-tip { border-left-color: rgb(31, 136, 61); }
+.md-alert.md-alert-caution { border-left-color: rgb(207, 34, 46); }
+.md-alert { padding: 0px 1em; margin-bottom: 16px; color: inherit; border-left: 0.25em solid rgb(0, 0, 0); }
+.md-alert-text-note { color: rgb(9, 105, 218); }
+.md-alert-text-important { color: rgb(130, 80, 223); }
+.md-alert-text-warning { color: rgb(154, 103, 0); }
+.md-alert-text-tip { color: rgb(31, 136, 61); }
+.md-alert-text-caution { color: rgb(207, 34, 46); }
+.md-alert-text { font-size: 0.9rem; font-weight: 700; }
+.md-alert-text svg { fill: currentcolor; position: relative; top: 0.125em; margin-right: 1ch; overflow: visible; }
+.md-alert-text-container::after { content: attr(data-text); text-transform: capitalize; pointer-events: none; margin-right: 1ch; }
+
+
+:root {
+    --side-bar-bg-color: #fafafa;
+    --control-text-color: #777;
+}
+
+@include-when-export url(https://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,700,400&subset=latin,latin-ext);
+
+/* open-sans-regular - latin-ext_latin */
+  /* open-sans-italic - latin-ext_latin */
+    /* open-sans-700 - latin-ext_latin */
+    /* open-sans-700italic - latin-ext_latin */
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    font-family: "Open Sans","Clear Sans", "Helvetica Neue", Helvetica, Arial, 'Segoe UI Emoji', sans-serif;
+    color: rgb(51, 51, 51);
+    line-height: 1.6;
+}
+
+#write {
+    max-width: 860px;
+  	margin: 0 auto;
+  	padding: 30px;
+    padding-bottom: 100px;
+}
+
+@media only screen and (min-width: 1400px) {
+	#write {
+		max-width: 1024px;
+	}
+}
+
+@media only screen and (min-width: 1800px) {
+	#write {
+		max-width: 1200px;
+	}
+}
+
+#write > ul:first-child,
+#write > ol:first-child{
+    margin-top: 30px;
+}
+
+a {
+    color: #4183C4;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    position: relative;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    line-height: 1.4;
+    cursor: text;
+}
+h1:hover a.anchor,
+h2:hover a.anchor,
+h3:hover a.anchor,
+h4:hover a.anchor,
+h5:hover a.anchor,
+h6:hover a.anchor {
+    text-decoration: none;
+}
+h1 tt,
+h1 code {
+    font-size: inherit;
+}
+h2 tt,
+h2 code {
+    font-size: inherit;
+}
+h3 tt,
+h3 code {
+    font-size: inherit;
+}
+h4 tt,
+h4 code {
+    font-size: inherit;
+}
+h5 tt,
+h5 code {
+    font-size: inherit;
+}
+h6 tt,
+h6 code {
+    font-size: inherit;
+}
+h1 {
+    font-size: 2.25em;
+    line-height: 1.2;
+    border-bottom: 1px solid #eee;
+}
+h2 {
+    font-size: 1.75em;
+    line-height: 1.225;
+    border-bottom: 1px solid #eee;
+}
+
+/*@media print {
+    .typora-export h1,
+    .typora-export h2 {
+        border-bottom: none;
+        padding-bottom: initial;
+    }
+
+    .typora-export h1::after,
+    .typora-export h2::after {
+        content: "";
+        display: block;
+        height: 100px;
+        margin-top: -96px;
+        border-top: 1px solid #eee;
+    }
+}*/
+
+h3 {
+    font-size: 1.5em;
+    line-height: 1.43;
+}
+h4 {
+    font-size: 1.25em;
+}
+h5 {
+    font-size: 1em;
+}
+h6 {
+   font-size: 1em;
+    color: #777;
+}
+p,
+blockquote,
+ul,
+ol,
+dl,
+table{
+    margin: 0.8em 0;
+}
+li>ol,
+li>ul {
+    margin: 0 0;
+}
+hr {
+    height: 2px;
+    padding: 0;
+    margin: 16px 0;
+    background-color: #e7e7e7;
+    border: 0 none;
+    overflow: hidden;
+    box-sizing: content-box;
+}
+
+li p.first {
+    display: inline-block;
+}
+ul,
+ol {
+    padding-left: 30px;
+}
+ul:first-child,
+ol:first-child {
+    margin-top: 0;
+}
+ul:last-child,
+ol:last-child {
+    margin-bottom: 0;
+}
+blockquote {
+    border-left: 4px solid #dfe2e5;
+    padding: 0 15px;
+    color: #777777;
+}
+blockquote blockquote {
+    padding-right: 0;
+}
+table {
+    padding: 0;
+    word-break: initial;
+}
+table tr {
+    border: 1px solid #dfe2e5;
+    margin: 0;
+    padding: 0;
+}
+table tr:nth-child(2n),
+thead {
+    background-color: #f8f8f8;
+}
+table th {
+    font-weight: bold;
+    border: 1px solid #dfe2e5;
+    border-bottom: 0;
+    margin: 0;
+    padding: 6px 13px;
+}
+table td {
+    border: 1px solid #dfe2e5;
+    margin: 0;
+    padding: 6px 13px;
+}
+table th:first-child,
+table td:first-child {
+    margin-top: 0;
+}
+table th:last-child,
+table td:last-child {
+    margin-bottom: 0;
+}
+
+.CodeMirror-lines {
+    padding-left: 4px;
+}
+
+.code-tooltip {
+    box-shadow: 0 1px 1px 0 rgba(0,28,36,.3);
+    border-top: 1px solid #eef2f2;
+}
+
+.md-fences,
+code,
+tt {
+    border: 1px solid #e7eaed;
+    background-color: #f8f8f8;
+    border-radius: 3px;
+    padding: 0;
+    padding: 2px 4px 0px 4px;
+    font-size: 0.9em;
+}
+
+code {
+    background-color: #f3f4f4;
+    padding: 0 2px 0 2px;
+}
+
+.md-fences {
+    margin-bottom: 15px;
+    margin-top: 15px;
+    padding-top: 8px;
+    padding-bottom: 6px;
+}
+
+
+.md-task-list-item > input {
+  margin-left: -1.3em;
+}
+
+@media print {
+    html {
+        font-size: 13px;
+    }
+    pre {
+        page-break-inside: avoid;
+        word-wrap: break-word;
+    }
+}
+
+.md-fences {
+	background-color: #f8f8f8;
+}
+#write pre.md-meta-block {
+	padding: 1rem;
+    font-size: 85%;
+    line-height: 1.45;
+    background-color: #f7f7f7;
+    border: 0;
+    border-radius: 3px;
+    color: #777777;
+    margin-top: 0 !important;
+}
+
+.mathjax-block>.code-tooltip {
+	bottom: .375rem;
+}
+
+.md-mathjax-midline {
+    background: #fafafa;
+}
+
+#write>h3.md-focus:before{
+	left: -1.5625rem;
+	top: .375rem;
+}
+#write>h4.md-focus:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+#write>h5.md-focus:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+#write>h6.md-focus:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+.md-image>.md-meta {
+    /*border: 1px solid #ddd;*/
+    border-radius: 3px;
+    padding: 2px 0px 0px 4px;
+    font-size: 0.9em;
+    color: inherit;
+}
+
+.md-tag {
+    color: #a7a7a7;
+    opacity: 1;
+}
+
+.md-toc { 
+    margin-top:20px;
+    padding-bottom:20px;
+}
+
+.sidebar-tabs {
+    border-bottom: none;
+}
+
+#typora-quick-open {
+    border: 1px solid #ddd;
+    background-color: #f8f8f8;
+}
+
+#typora-quick-open-item {
+    background-color: #FAFAFA;
+    border-color: #FEFEFE #e5e5e5 #e5e5e5 #eee;
+    border-style: solid;
+    border-width: 1px;
+}
+
+/** focus mode */
+.on-focus-mode blockquote {
+    border-left-color: rgba(85, 85, 85, 0.12);
+}
+
+header, .context-menu, .megamenu-content, footer{
+    font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+.file-node-content:hover .file-node-icon,
+.file-node-content:hover .file-node-open-state{
+    visibility: visible;
+}
+
+.mac-seamless-mode #typora-sidebar {
+    background-color: #fafafa;
+    background-color: var(--side-bar-bg-color);
+}
+
+.mac-os #write{
+    caret-color: AccentColor;
+}
+
+.md-lang {
+    color: #b4654d;
+}
+
+/*.html-for-mac {
+    --item-hover-bg-color: #E6F0FE;
+}*/
+
+#md-notification .btn {
+    border: 0;
+}
+
+.dropdown-menu .divider {
+    border-color: #e5e5e5;
+    opacity: 0.4;
+}
+
+.ty-preferences .window-content {
+    background-color: #fafafa;
+}
+
+.ty-preferences .nav-group-item.active {
+    color: white;
+    background: #999;
+}
+
+.menu-item-container a.menu-style-btn {
+    background-color: #f5f8fa;
+    background-image: linear-gradient( 180deg , hsla(0, 0%, 100%, 0.8), hsla(0, 0%, 100%, 0)); 
+}
+
+
+
+</style><title>Chapter 1 - Hardware Architecture</title>
+</head>
+<body class='typora-export os-windows'><div class='typora-export-content'>
+<div id='write'  class=''><h1 id='chapter-1---hardware-architecture'><span>Chapter 1 - Hardware Architecture</span></h1><div class='md-toc' mdtype='toc'><p class="md-toc-content" role="list"><span role="listitem" class="md-toc-item md-toc-h1" data-ref="n0"><a class="md-toc-inner" href="#chapter-1---hardware-architecture">Chapter 1 - Hardware Architecture</a></span><span role="listitem" class="md-toc-item md-toc-h2" data-ref="n1939"><a class="md-toc-inner" href="#hardware-block-diagram">Hardware Block Diagram</a></span><span role="listitem" class="md-toc-item md-toc-h2" data-ref="n31"><a class="md-toc-inner" href="#scalar-engine">Scalar Engine</a></span><span role="listitem" class="md-toc-item md-toc-h2" data-ref="n61"><a class="md-toc-inner" href="#vector-processing-unit-vpu">Vector Processing Unit (VPU)</a></span><span role="listitem" class="md-toc-item md-toc-h2" data-ref="n103"><a class="md-toc-inner" href="#matrix-processing-unit-mpu">Matrix Processing Unit (MPU)</a></span><span role="listitem" class="md-toc-item md-toc-h2" data-ref="n161"><a class="md-toc-inner" href="#memory-hierarchy">Memory Hierarchy</a></span><span role="listitem" class="md-toc-item md-toc-h3" data-ref="n198"><a class="md-toc-inner" href="#tcm-vs-cache">TCM vs Cache</a></span><span role="listitem" class="md-toc-item md-toc-h3" data-ref="n210"><a class="md-toc-inner" href="#ddr-bandwidth">DDR Bandwidth</a></span><span role="listitem" class="md-toc-item md-toc-h3" data-ref="n212"><a class="md-toc-inner" href="#on-chip-ram">On Chip RAM</a></span><span role="listitem" class="md-toc-item md-toc-h2" data-ref="n223"><a class="md-toc-inner" href="#data-movement-engines">Data Movement Engines</a></span><span role="listitem" class="md-toc-item md-toc-h3" data-ref="n224"><a class="md-toc-inner" href="#cpu-loadstore-unit-lsu">CPU Load/Store Unit (LSU)</a></span><span role="listitem" class="md-toc-item md-toc-h3" data-ref="n232"><a class="md-toc-inner" href="#vector-lsu">Vector LSU</a></span><span role="listitem" class="md-toc-item md-toc-h3" data-ref="n242"><a class="md-toc-inner" href="#matrix-lsu">Matrix LSU</a></span><span role="listitem" class="md-toc-item md-toc-h3" data-ref="n261"><a class="md-toc-inner" href="#direct-memory-access-dma-engines">Direct Memory Access (DMA) Engines</a></span><span role="listitem" class="md-toc-item md-toc-h2" data-ref="n275"><a class="md-toc-inner" href="#bringing-it-all-together">Bringing it all together</a></span></p></div><p>&nbsp;</p><h2 id='hardware-block-diagram'><span>Hardware Block Diagram</span></h2><p><span>                               </span></p><p><span> </span><img src="C:\work\edgeai_book\NPU_BD.jpg" style="zoom:50%;" /></p><p>&nbsp;</p><p><span>Figure 1 : Block Diagram of a RISC-V based NPU </span></p><p><img src="C:\work\edgeai_book\SoC_BD.jpg" style="zoom:50%;" /></p><p><span>Figure 2 : Example of a SoC with an Apps CPU Cluster, NPU cluster, On-Chip SRAM and External Memory Interface to DDR</span></p><p><span> </span></p><p><span> </span></p><p><span>In the architecture assumed here, the NPU acts as an accelerator which offloads the Apps CPU from the heavy computational load. An example of an Apps CPU is ARM Cortex-A, or a 64-bit RISC-V core, typically running an Operating System like Linux, QNX or RTOS. In the typical usage model, Apps CPU hosts the application (e.g. Face ID), receives the data (e.g. camera frames) and sends it to the NPU for inference computation (e.g. MTCNN face recognition). Apps CPU then goes back to running OS and apps while the NPU is running math heavy computations. Once the NPU is done, it informs the Apps CPU and the processed results are passed on to the application which requested it.</span></p><p><span>In the meanwhile, NPU will need additional data from off-chip memory (e.g. DDR) or from on-chip SRAM. It accesses the memory using its own data movement engines so that the Apps CPU is not disturbed. </span></p><p><span>The choice of architecture is motivated by the following principles:</span></p><p><span>In a typical AI model, computational load is heavily dominated by matrix multiplication operations. Matrix Processing Unit (</span><strong><span>MPU</span></strong><span>) is a hardware block custom designed to process 2D matrices, with </span><strong><span>M</span></strong><span>x</span><strong><span>N</span></strong><span> operations in parallel. Hence it can perform these operations at a very high speed and low power. </span><em><span>M and N govern the matrix MAC array dimension and are important design decisions affecting PPA.</span></em></p><p><span> </span></p><ul><li><p><span>Since MPU is custom designed for matrix multiplication, it cannot process other operations like addition, min/max etc. These operations are offloaded to a Vector (</span><strong><span>VPU</span></strong><span>) which offers 1-dimensional parallelism.</span></p><p>&nbsp;</p></li><li><p><span>VPU has a limited instruction set, and many operations are not good candidates for data parallelism. This is where </span><strong><span>scalar</span></strong><span> comes handy. Additionally, scalar core is responsible to run control software and moving data from cache/TCM to register files.</span></p><p><span> </span></p></li><li><p><span>AI operations are memory intensive. To achieve full utilization of compute elements, data must be moved in/out of registers fast enough. </span><strong><span>TCM</span></strong><span> is a memory sitting close to the CPU, often with same latency as a cache hit. However, it has lower complexity than cache because of no cache management and coherence to worry about.</span></p><p><span> </span></p></li><li><p><span>Data Movement Engine (DME) is responsible for bringing data from On Chip SRAM to TCM. DME takes care of bringing small tiles from big tensors which may be stored in a multi-dimensional layout.</span></p><p>&nbsp;</p></li></ul><p><span>In the next section, we take a closer look at each of the hardware modules.</span></p><h2 id='scalar-engine'><span>Scalar Engine</span></h2><p><span>As described earlier, scalar is responsible for graph execution and issuing instructions for scalar’s compute elements (ALU, FPU etc.) as well as VPU and MPU. In some cases, scalar’s LSU (Load store unit) may also be responsible for moving data from TCM/cache to/from VPU’s register files. Therefore, the scalar plays a pivotal role in AI graph execution. Further, there are many operations which do not fit within VPU or MPU’s instruction set. Hence, these must be executed on the scalar. Some examples of such operations are</span></p><ul><li><p><span>Non Maximal Suppression</span></p></li><li><p><span>ArgMax, ArgMin</span></p></li><li><p><span>AffineGrid</span></p></li><li><p><span>Logical Operators (And/Or/Xor)</span></p></li><li><p><span>Reshape</span></p></li><li><p><span>Flatten</span></p></li><li><p><span>..and many more</span></p></li></ul><p><span>For best performance, it is expected that an AI graph will have very few of such operations. For e.g. NMS is used at the end of the graph to find the best bounding box. Most of the heavy lifting is done by MPU and VPU, therefore the scalar engine does not need be an ultra-high performance CPU core, but there are a few attributes which can help get maximum performance from the NPU</span></p><ol start='' ><li><p><span>Instruction level parallelism – helps in executing load/store, scalar, vector and matrix instructions in a pipelined fashion, keeping all HW blocks occupied as much as possible. </span></p></li><li><p><span>Multi-threading – Low latency context switches.</span></p></li><li><p><span>FPU – Floating Point Unit for generating final probabilities and classification scores.</span></p></li></ol><p><span>Some of the NPUs use a DSP as the scalar engine, which commonly use VLIW for Instruction Level Parallelism. Similar results can be achieved on RISC-V cores with hyper-scalar pipelines.</span></p><ul><li><p><a href='https://www.cs.umd.edu/~meesh/411/CA-online/chapter/multiple-issue-processors-ii/index.html'><span>A comparison of VLIW vs SMT</span></a><span>* </span></p></li></ul><p><span>Some DSPs also support multi-threading, for e.g. Qualcomm Snapdragon 8 Gen 2, Hexagon has 6-way SMT. </span></p><p><a href='https://www.youtube.com/watch?v=QR4niawYSVI'><span>RISC-V supports up to 8-way SMT</span></a><span> </span></p><p><span> </span></p><h2 id='vector-processing-unit-vpu'><span>Vector Processing Unit (VPU)</span></h2><p><span>Vector processing is a type of data level parallelism where a single instruction operates on multiple data elements simultaneously. In concept, it is very similar to SIMD (e.g. ARM Neon, Intel AVX-512) but there are some subtle but critical differences. Refer to </span><a href='RISC-V Vector vs ARM Neon SIMD'><span>RISC-V Vector vs ARM Neon SIMD</span></a><span> </span></p><p><span>Key design time attributes of a VPU based on RISC-V are</span></p><ol start='' ><li><p><strong><span>VLEN</span></strong><span> – Register width (in bits).</span></p></li><li><p><strong><span>ELEN</span></strong><span> – Widest supported element size.</span></p></li><li><p><strong><span>LMUL</span></strong><span> – Lane multiplier for register grouping. Allows packing multiple registers together to operate more number of elements in parallel. </span></p></li></ol><p><strong><span>SEW</span></strong><span> (Selected Element Width) is a runtime configuration to choose the bitwidth of the operands. This gives us the maximum number of elements which can be processed together:</span></p><p><strong><span>VLMAX = (VLEN</span><span>*</span><span>LMUL)/SEW</span></strong></p><p><span>VLEN, ELEN and LMUL are important design decisions, impacting performance, die area and therefore the cost &amp; power of the VPU.</span></p><p><span>Vector engines offer not only faster execution but also code size reduction. Let’s take an example of adding two arrays of length n.</span></p><p><span>void vvaddint32(size_t n, const int</span><em><span>x, const int</span></em><span>y, int*z){ </span></p><p><code>for (size_t i=0; i&lt;n; i++)</code></p><p><code>z[i]=x[i]+y[i];</code><span> </span></p><p><span>    </span><code>}</code></p><p><span>Figure 3 : C code of array addition on scalar</span></p><p><span>  This loop has n additions, increments of i, comparisons between i and n, and branching logic. When compiled, it will result in 36 instructions. </span></p><p><span> </span></p><p><span>On RISC-V Vector, it compiles into 11 instructions as shown below </span></p><p><code>vvaddint32:</code></p><p><span>  </span><code>vsetvli t0, a0, e32, ta, ma # Set vector length based on 32-bit vectors</code></p><p><span>  </span><code>vle32.v v0, (a1)     # Get first vector</code></p><p><span>   </span><code>sub a0, a0, t0     # Decrement number done</code></p><p><span>   </span><code>slli t0, t0, 2     # Multiply number done by 4 bytes</code></p><p><span>   </span><code>add a1, a1, t0     # Bump pointer</code></p><p><span>  </span><code>vle32.v v1, (a2)     # Get second vector</code></p><p><span>   </span><code>add a2, a2, t0     # Bump pointer</code></p><p><span>  </span><code>vadd.vv v2, v0, v1    # Sum vectors</code></p><p><span>  </span><code>vse32.v v2, (a3)     # Store result</code></p><p><span>   </span><code>add a3, a3, t0     # Bump pointer</code></p><p><span>   </span><code>bnez a0, vvaddint32  # Loop back</code></p><p><span>   </span><code>ret          # Finished</code></p><p><span>Figure 4 : Assembly code of array addition on RISC-V Vector</span></p><p><span>Source : </span><a href='https://github.com/riscvarchive/riscv-v-spec/blob/master/example/vvaddint32.s' target='_blank' class='url'>https://github.com/riscvarchive/riscv-v-spec/blob/master/example/vvaddint32.s</a><span> </span></p><p><span>We see more than 3x improvement in code density. On a 256-bit vector, vadd.vv instruction processes 8 elements at a time since data type is int32. </span></p><p><span>A lot of AI operations like “</span><em><span>add</span></em><span>”, “</span><em><span>concat</span></em><span>” etc. can be done effectively on vector. RISC-V Vector also supports permute instructions which can be used for table lookup. This is extremely helpful in running ops which include exponentiation and logarithmic functions. Softmax, used heavily in transformer networks, is a good example. </span></p><p><span> </span></p><p>&nbsp;</p><p><span> </span></p><h2 id='matrix-processing-unit-mpu'><span>Matrix Processing Unit (MPU)</span></h2><p><span>Also known as “Tensor Processor” on some NPUs, this block offers data parallelism across two dimensions compared to a vector which offers 1D parallelism. Matrix array size is a key design decision. Larger matrices can help boost performance, but result in higher area and power. When matrix array becomes very large, feeding it with valid input can become challenging and may cause under-utilization of processing elements. We will visit this topic in more detail in section 8.1. </span></p><p><span>Basic operation of an MPU is explained below, </span></p><p><span> </span><img src="C:\work\edgeai_book\Matrix_BD.png" style="zoom:50%;" /></p><p><span>Figure 5 : MPU matmul</span></p><p><span>There are several matrix extensions proposed in RISC-V forum. The two most prominent are</span></p><ol start='' ><li><p><strong><span>IME (Integrated Matrix Extension)</span></strong><span> – Closely coupled with Vector. Matrix and Vector registers are shared. Matrix introduces no additional architecture state, making it easier for adoption in OSes (e.g. Linux). MAC array size is constrained to vector length, and it becomes a challenge to process computationally intensive workloads.  Despite these limitations, this architecture is well suited for AI enabled Apps CPUs.</span></p></li></ol><p><span> </span></p><ol start='2' ><li><p><strong><span>AME (Attached Matrix Extension)</span></strong><span> – Decoupled from Vector. Matrix has its own registers and accumulators. Designers have more freedom to implement schemes like “outer-product matmul” on larger MAC arrays. More suitable for NPU accelerators where high performance (/watt and /mm2) is the goal.</span></p></li></ol><p><span>A lot of topics we will discuss in this book are applicable to both the architectures, but the authors assume AME wherever there is a divergence.</span></p><p><a href='https://lists.riscv.org/g/tech-attached-matrix-extension/attachment/210/1'><span>RISC-V AME spec 0.5b</span></a><span> defines:</span></p><ol start='' ><li><p><strong><span>ELEN</span></strong><span> – Widest supported element size. Similar to ELEN in Vector.</span></p></li><li><p><strong><span>MLEN</span></strong><span> – Matrix tile size (in bits).</span></p></li><li><p><strong><span>RLEN</span></strong><span> – Matrix row size (in bits).</span></p></li><li><p><strong><span>AMUL</span></strong><span> - multiple of length for matrix accumulation registers. Similar to LMUL in vector. AMUL can be used to group registers to operate on wider elements, up to 8x. TBD : Confirm</span></p></li></ol><p><strong><span>SEW</span></strong><span> = Selected element width, similar to as in Vector.</span></p><p><span>An Accumulation Register has MLEN</span><em><span>AMUL bits of state, where each row has RLEN</span></em><span>AMUL bits. As a result, there are MLEN/RLEN rows for each accumulation register in logic.</span></p><p><span>This leads to the following constraints</span></p><ol start='' ><li><p><strong><span>TMMAX</span></strong><span>, max value of m in Figure 5 = MLEN/RLEN</span></p></li><li><p><strong><span>TNMAX</span></strong><span>, max value of n in Figure 5 = RLEN/SEW</span></p></li><li><p><strong><span>TKMAX</span></strong><span>, max value of k in Figure 5 = min(TMMAX, TNMAX)</span></p></li></ol><p><span>As an example, for MLEN=512, RLEN=64, SEW=8</span></p><p><span>TMMAX = 8, TNMAX = 8, TKMAX = 8. This means that MPU is designed to perform 8x8x8 matrix multiplication on INT8/FP8 data.</span></p><p>&nbsp;</p><p><span>Before MPU can process the matrices, they must be loaded to Matrix Register File. This is done by matrix LSU. Since register file space is small and precious, entire matrices are not loaded at once. Instead big matrices are divided into tiles of size </span><em><span>mtile_m x mtile_k x mtile_n</span></em><span>. The loads are done row-wise for matrix A and column-wise for matrix B.</span></p><p><span>The basic operational steps for compute dot product of 1 tile are</span></p><ol start='' ><li><p><span>Load row #i, from tile A.</span></p></li><li><p><span>Load column #j from tile B.</span></p></li><li><p><span>Compute outer product. The result in accumulated in matrix registers.</span></p></li><li><p><span>Repeat steps 1-3 </span><em><span>mtile_k</span></em><span> number of times.</span></p></li></ol><p><span>Step #3 above is where computation happens. A typical MPU can execute this in a single cycle. Hence, the loop above computes tile A and B dot product in </span><em><span>mtile_m</span></em><span> x </span><em><span>mtile_n</span></em><span> cycles. </span></p><p><span>The total number of computations for a tile are </span><em><span>mtile_m</span></em><span> * </span><em><span>mtile_k</span></em><span> * </span><em><span>mtile_n</span></em><span> multiplies and adds i.e. total </span><strong><span>2</span><span>*</span><span> </span><span>*</span><span>mtile_m</span><span>*</span><span> </span><span>*</span><span> </span><span>*</span><span>mtile_k</span><span>*</span><span> </span><span>*</span><span> </span><span>*</span><span>mtile_n</span><span>*</span></strong><span> math operations, done in *</span><strong><span>mtile_k</span><span>*</span></strong><span> cycles. Thus MPU achieves a speedup of </span><strong><span>2</span><span>*</span><span> </span><span>*</span><span>mtile_m</span><span>*</span><span> </span><span>*</span><span> </span><span>*</span><span>mtile_n</span><span>*</span></strong><span> ops/cycle. Full throughput is achieved when</span></p><p><span>·     </span><em><span>mtile_m =</span></em><span> TMMAX/SEW</span></p><p><span>·     </span><em><span>mtile_k =</span></em><span> TKMAX </span></p><p><span>·     </span><em><span>mtile_n =</span></em><span> TNMAX</span></p><p><span>Substituting the values of TMMAX, TNMAX and TKMAX, we compute maximum throughput achievable = </span></p><p><span>2* ((MLEN/RLEN)/SEW) * (RLEN/SEW) = </span><strong><span>2</span><span>*</span><span>MLEN/SEW2</span></strong></p><p><span>A MPU with 4096-bit MLEN, running at 1GHz, operating on 8-bit data has a peak performance rating of </span></p><p><em><span>2 </span><span>*</span><span> 642 </span><span>*</span><span> 1G = 8 Trillion Operations Per Second, commonly expressed as </span><strong><span>8 TOPS</span></strong><span>.</span></em></p><p><span> </span></p><h2 id='memory-hierarchy'><span>Memory Hierarchy</span></h2><p><span> </span><img src="C:\work\edgeai_book\Mem_hierarchy.png" style="zoom:50%;" /></p><p><span>Figure 6 : Typical Memory Hierarchy in an embedded SoC</span></p><p><span>A hierarchical memory organization helps in a balanced PPA by arranging different types of memory in layers. The table below shows the speed vs cost vs data movement energy comparison of different types of memories</span></p><figure class='table-figure'><table><thead><tr><th><strong><span>Memory Type</span></strong></th><th><strong><span>Cost/byte</span></strong></th><th><strong><span>Speed</span></strong></th><th><strong><span>Energy/byte</span></strong></th></tr></thead><tbody><tr><td><span>Registers</span></td><td><span>Highest</span></td><td><span>Fastest</span></td><td><span>Lowest</span></td></tr><tr><td><span>TCM/Cache (L1,L2,L3)</span></td><td><span>High</span></td><td><span>Fast</span></td><td><span>Low</span></td></tr><tr><td><span>On Chip RAM/LLC</span></td><td><span>Mid</span></td><td><span>Mid</span></td><td><span>Mid</span></td></tr><tr><td><span>DDR</span></td><td><span>Low</span></td><td><span>Slow</span></td><td><span>High</span></td></tr><tr><td><span>Storage</span></td><td><span>Lowest</span></td><td><span>Slowest</span></td><td><span>Highest</span></td></tr></tbody></table></figure><p><span> </span></p><p><span>This places an economical (and also physical) limit on capacities of registers files, caches and on-chip RAM. To achieve best performance, data must be moved in small chunks from big memories to fast memories close to execution units. The data must be evicted when it is no longer needed so that space can be created for the next tile of data. Detailed discussion of different types of memory is outside the scope of this book. However, we will discuss a few important topics which we believe are highly important to understand performance challenges of AI inference.</span></p><h3 id='tcm-vs-cache'><span>TCM vs Cache</span></h3><p><span>A TCM (Tightly Coupled Memory) sits close to the execution units and offers access latency comparable to L1 cache hit. The major differences between TCM and cache are</span></p><ol start='' ><li><p><span>TCMs are mapped in system memory map, while cache is not.</span></p></li><li><p><span>Cache can be accessed only by the CPU, while TCMs can be accessed by other masters, including DMA engines in the SoC.</span></p></li><li><p><span>TCMs can be multi-port, which allows other cores to access TCM of one core, although at a higher latency.</span></p></li><li><p><span>TCMs have lower overheads, since there is no coherence, no eviction policy and no tags to be maintained.</span></p></li></ol><p><span>Therefore, TCMs are preferred to caches to store AI data. The execution order in an AI graph is highly predictable and software controlled management is quite effective.</span></p><h3 id='ddr-bandwidth'><span>DDR Bandwidth</span></h3><p><span>DDR bandwidth, expressed in GB/s, is the rate at which data can be transferred between the SoC and the DDR. This is a critical factor in any embedded SoC, but becomes even more critical in AI because of heavy data intensive nature of workloads. If the data cannot be moved fast enough to execution units, it cause stalls which results in lower performance. DDR bandwidth is a shared resource between all the subsystems inside a SoC including Apps CPU, ISP (Image Signal Processor), DSS (Display Sub System), VSS (Video Subsystem), NPU and many more. Therefore an NPU which can minimize off-chip data transfers usually results in higher performance in real-world use cases.</span></p><h3 id='on-chip-ram'><span>On Chip RAM</span></h3><p><span>On Chip RAM acts as a buffer between TCM and DDR. This memory can be shared by all the subsystems, including all the NPUs (</span><em><span>if the SoC has multiple NPUs</span></em><span>). To best utilize DDR bandwidth (as discussed in the previous section), it is beneficial to</span></p><ol start='' ><li><p><span>Access DDR in big chunks. Helps more efficient reads and writes.</span></p></li><li><p><span>Increase data reuse to keep the tiles longer in the SoC internal memory. This will be clearer after the tiling chapter.</span></p></li><li><p><span>Share data (weights, intermediate results) between NPUs.</span></p></li></ol><p><span>Thus, a well sized SRAM can reduce DDR traffic and make DDR access more optimal. However, SRAM has cost and area impact which imposes constraints on how big SRAM can be placed inside the SoC. Therefore, SRAM sizing is an important design decision affecting PPA. In section </span><TBD><span> we explore a HW-SW co-design methodology to come up with an optimal SRAM size for the desired system performance.</span></p><p><span> </span></p><h2 id='data-movement-engines'><span>Data Movement Engines</span></h2><h3 id='cpu-loadstore-unit-lsu'><span>CPU Load/Store Unit (LSU)</span></h3><p><span>In a load-store architecture, CPU performs logic and math operations on the operands in the registers. LSU is responsible for </span></p><ol start='' ><li><p><span>Loading the operands from memory to CPU’s register files.</span></p></li><li><p><span>Writing the results from register files to memory.</span></p></li></ol><p><span>In most modern CPUs ld/st instructions are pipelined to run concurrently with math and logic instructions, but they can still cause pipeline stalls for e.g. in case of a cache miss. </span></p><h3 id='vector-lsu'><span>Vector LSU</span></h3><p><span>VLSU is a fully pipelined LSU unit to move a block of data between memory and Vector Register File. It supports three types of addressing</span></p><ol start='' ><li><p><span>Unit Stride – Fastest</span></p></li><li><p><span>Non-unit, but constant stride</span></p></li><li><p><span>Indexed (gather-scatter) – Slowest, but helpful for operations like table lookup etc. For e.g. activation functions like </span><em><span>tanh</span></em><span>, </span><em><span>sigmoid</span></em><span> etc. can be specified through a lookup table and executed on vector via indexed addressing. </span></p></li></ol><p><span> </span></p><h3 id='matrix-lsu'><span>Matrix LSU</span></h3><p><span>Keeping the MAC arrays fed with data is a challenging task. The usual way of CPU’s LSU reading from cache will not be able to provide sufficient bandwidth and will often cause stalls because of cache misses. Therefore, a better solution is needed.</span></p><p><span>AI data has some special attributes, for e.g.</span></p><ol start='' ><li><p><span>Multi-dimensional tensors, strided access. Not cache friendly.</span></p></li><li><p><span>Skip pattern reads.</span></p></li><li><p><span>Packed formats (e.g. two INT4 weight packed in one byte).</span></p></li><li><p><span>Memory access pattern is predictable. Therefore it is a good practice to bypass data caches. </span></p></li></ol><p><span> </span></p><p><span>This creates the need for an AI specific data movement engine which can read a “tile” of data from memory and feed the MPU registers without involving the CPU. The tile is expected to be a small portion of a multi-dimensional tensor; hence the data movement engine must be capable of address generation using tensor dimensions.</span></p><p><span> </span></p><p><span>RISC-V (proposed) matrix extension defines matrix load and store instructions but does not specify LSU behavior. For best performance it is critical that Matrix LSU can fetch the data directly from memory, offloading the CPU. It is also recommended that Matrix LSU reads/writes to a TCM or on-chip SRAM instead of DDR. How does the data move between DDR and TCM/SRAM? See the next section. </span></p><p><span> </span></p><p><span>It must be noted that for VLSU and MLSU to feed the execution units at the desired rate, Memory system must provide enough sustained bandwidth of (# lanes x SEW) /clock cycle.</span></p><p><span> </span></p><h3 id='direct-memory-access-dma-engines'><span>Direct Memory Access (DMA) Engines</span></h3><p><span>A DMA engine can move data from almost anywhere to anywhere in the SoC, as long as source and destination are mapped in system memory map. In most high performance compute (e.g. multimedia, AI etc.), DMAs are commonly used to move inputs, outputs and parameters between DDR and SoC internal memories (e.g. SRAM). This is a faster, cheaper and power efficient method to offload the CPU and other processing elements from data movement. DMA can work in parallel with compute, which allows a pipelined architecture.</span></p><p><span>An example of pipelining is where a tensor is broken down into small tiles. At any given time:</span></p><ol start='' ><li><p><span>Compute elements are processing tile #N, reading and writing to SRAM.</span></p></li><li><p><span>DMA is writing out the results of tile #N-1 from SRAM to DDR.</span></p></li><li><p><span>DMA is proactively fetching input(s) for tile #N+1 from DDR to SRAM.</span></p></li></ol><p><span>If there is only one DMA, steps #2 and #3 may be done sequentially. The total execution time will be </span></p><p><em><span>max(t1, t2+t3)</span></em></p><p><span>Therefore, to get best utilization of the precious compute elements, memory movement must be faster than compute. This is where DMAs excel.</span></p><p><span> </span></p><h2 id='bringing-it-all-together'><span>Bringing it all together</span></h2><ol start='' ><li><p><span>The full AI model (millions or billions of parameters), resides in DDR.</span></p></li><li><p><span>Every few milliseconds, a new input tensor like camera image is written to DDR.</span></p></li><li><p><span>SoC DMA moves a block of weights and activations from DDR to SRAM.</span></p></li><li><p><span>Vector/Matrix LSU moves smaller tiles from SRAM to register files.</span></p></li><li><p><span>Computations are done in the register space. </span></p></li><li><p><span>Vector/Matrix LSU stores the results in SRAM. These results may be reused for next layer of processing. Therefore, the system tries to keep the intermediate results in SRAM as long as possible.</span></p></li><li><p><span>When SRAM is full, or the final results are available, SoC SMA writes a big block of data to DDR.</span></p></li></ol><p><span>This is how multi-level memory hierarchy and data movement architecture results in most optimal performance, power and cost.</span></p></div></div>
+</body>
+</html>
