@@ -26,10 +26,16 @@ In all scenarios, we will assume that A, B, C are large matrices and reside in e
 
 A GeMM operation of form C = A.B can be implemented as 3-level nested for loop, where output element {i,j} is a dot product of ith row of A and jth row of B.
 
-`for` m=0:M` 
-    for n=0:N                           
-        for k=0:K                       
-            C[m,n] += A[m,k] * B[k,n]`
+
+
+```
+ for m in range (M):                           
+    for n in range (N):                 
+        for in range (K):
+           C[m,n] += A[m,k] * B[k,n]
+```
+
+
 
 The inner loop does the following
 
@@ -38,7 +44,7 @@ The inner loop does the following
 
  
 
-After the inner loop is complete, C[m,n] is ready to be written out to memory. CPU may do a reduction or saturation to convert it to a lower data type. The inner loop is repeated for all *MxN* outputs in matrix *C*. Hence, the full loop takes *M\*N*K* FMAs. This method is known as **Inner Product** method. It generates a single full sum at a time, with no merging of partial sums. This requires a hardware intersection unit to align effectual inputs. This is fairly efficient from computation point of view, ***if\*** all load/store and other instructions can be pipelined then the runtime will be dominated by FMA cycles.
+After the inner loop is complete, C[m,n] is ready to be written out to memory. CPU may do a reduction or saturation to convert it to a lower data type. The inner loop is repeated for all *MxN* outputs in matrix *C*. Hence, the full loop takes M*N*K FMAs. This method is known as **Inner Product** method. It generates a single full sum at a time, with no merging of partial sums. This is fairly efficient from computation point of view, ***if\*** all load/store and other instructions can be pipelined then the runtime will be dominated by FMA cycles.
 
 But that’s a big **if**. The biggest problem we see here is access pattern of matrix B resulting is an extremely high load time of B[k,n]. To understand this better, let’s note that the change variable in the inner loop is *k*, which means that for successive values of *k**,*** B[k,n] is read from a different row in the matrix. <u>*This results in highly inefficient memory access*</u> for two reasons
 
@@ -58,10 +64,12 @@ But that’s a big **if**. The biggest problem we see here is access pattern of 
 
 We can move inner loop to middle as shown below
 
-`for` m=0:M` 
-    for k=0:K                           
-        for n=0:N                       
-            C[m,n] += A[m,k] * B[k,n]`
+```
+ for m in range (M):                           
+    for k in range (K):                 
+        for n in range (N):
+           C[m,n] += A[m,k] * B[k,n]
+```
 
 
 
@@ -77,10 +85,14 @@ The inner loop generates partial sums of *n* output elements. *n* final outputs 
 
 We can move inner loop one more level outside as shown below
 
-`for` k=0:K` 
-    for m=0:m                           
-        for n=0:N                       
-            C[m,n] += A[m,k] * B[k,n]`
+```
+for k in range (K):
+    for m in range (M):
+       for n in range (N):
+          C[m,n] += A[m,k] * B[k,n]
+```
+
+
 
 The inner loop does a partial update of mx*n* output elements. mx*n* final outputs will be ready after the end of the outer loop.  This improves spatial locality in matrix B but **also increases data reuse for matrix A**. Note that A[m,k] is independent of the inner loop change variable *n*. Hence, a row of A needs to be loaded only once in the middle loop and gets reused for all iterations of the inner loop. This reduces number of A loads by a factor of k.
 
@@ -92,10 +104,12 @@ But nothing comes free. The cost of doing this reordering is that we need mx*n* 
 
 We start with Gustavson’s method and modify it for parallelization along the "N" axis.
 
-`for` m=0:M` 
-    for k=0:K                           
-        for n=0:N/VL                       
-            C[m,n:**n+VL**] += A[m,k] * B[k,n:n+VL]`
+```
+for m in range (M):
+   for k in range (K):
+       for n in range (0,N,VL):
+          C[m,n] += A[m,k] * B[k,n:n+VL]
+```
 
 
 
@@ -126,87 +140,148 @@ Tile size is chosen such that all the input and output tiles fit in internal SRA
 
 ### **GeMM on an MPU**
 
- We will discuss two ways of doing it - inner product and outer product, and we will discuss pros and cons of each. 
+ Assuming, M, N and K are large, first step is to divide them into smaller "*tiles*" which can fit in MPU registers. For this discussion, we assume square tiles of size TxT, although in practice, tile size and shape depends on MPU implementation. 
+
+
+
+This is how big matrices are divided into TxT tiles. 
+
+```
+ for m in range (0,M,T):
+    for n in range (0,N,T):
+        for k in range (K):
+           tile_A = A[m:m+T,k:k+T]
+           tile_B = B[k:k+T, n:n+T]
+           tile_C += tiled_dot_product(tile_A, tile_B)
+        C[m:m+T,n:n+T] = tile_C
+           
+```
+
+*tiled_dot_product* is the micro-kernel running on the MPU, computing the dot product of tile_A, tile_B. 
+
+This micro-kernel is the building block of all matrix based AI operations including fully connected layers, convolutions and more. Therefore, optimizing this micro-kernel is key to getting best performance per watt and per area.
+
+Let's recall a few things before we go into performance analysis
+
+1.  Matrix multiply has computation complexity of $O(N^3)$.
+2. VPU offers $O(N)$ parallelism.
+3. MPU offers $(ON^2)$ parallelism. Execution time is $O(N)$.
+4. Matrix load is an $(ON^2)$ operation, since we have to load matrices of dimension NxN.
+5. This means that load takes much longer than compute, unless we do something about it. 
+
+
+
+Let's look at one of the implementations and analyze the performance of the micro-kernel
+
+### **Outer Product Performance Analysis**
+
+Reference : https://www.securerisc.org/RISCVIME/index.html
+
+Assumptions
+
+1. Load bandwidth, B = MLEN/SEW bits/cycle
+2. Matrix MAC Array Size = TxT, where T= MLEN/SEW
+
+For e.g. MLEN = 512, SEW=8 has 64x64 MAC array and 512-b = 64-bytes/cycle load bandwidth
+
+
+
+The micro-kernel tiled_dot_product is implemented as follows
+
+1. Load a row of tile_A. 64-bytes. 1 cycle.
+2. Load a column of tile_B. 64-bytes. 1 cycle.
+3. Compute outer product and accumulate in tile_C. 1 cycle.
+
+Repeat this T times to complete TxT dot product.
+
+
+
+**Pseudocode**
+
+```
+def tiled_dot_product(tile_A, tile_B):
+    for i in range (T):        #T is a hardware constant  
+        mload ms1, tile_A[i,:] #Load i_th row of tile A into register ms1
+        mload ms2, tile_B[:,i] #Load i_th col of tile B into register ms2
+        outer acc ms1 ms2      #Compute outer product and accumulate in register acc     
+```
+
+Total #cycles = 3T. Average throughput = $2T^3/3$ ops/cycle
+
+This is much lower than ($2*T^2$), which is what we expected since we have TxT MAC array. The reason is that load and compute are being done sequentially. Since MPU's LSU and EXU are separate units, we should be able to do at least one load in parallel with compute.
+
+Let's modify the pseudocode accordingly
+
+
+
+```
+def tiled_dot_product(tile_A, tile_B):
+    mload ms1, tile_A[0,:] ; 
+    mload ms2, tile_B[:,0] 
+	for i in range (T):                                   #T is a hardware constant 
+        outer acc ms1 ms2      ; mload ms1, tile_A[i+1,:] #Compute and load in parallel
+        mload ms2, tile_B[:,i+1]                          #Only load. There is nothing to compute since we are waiting for data
+```
+
+We are able to save 1 cycle by hiding it behind outer product computation. 
+
+Total #cycles = 2T. Average throughput = ($T^2$) ops/cycle. Good, but can we do better. 
+
+Turns out we can, as follows
+
+
+
+1. Load two rows from A in 2 cycles.
+2. Load two columns from B in 2 cycles.
+3.  There are 4 outer products to be computed
+   1. A0B0
+   2. A0B1
+   3. A1B0
+   4. A1B1
+
+Now there are 4 loads and 4 compute cycles in the loop. Let's modify the micro-kernel as follows 
+
+```
+def tiled_dot_product(tile_A, tile_B):
+    mload ms1, tile_A[0,:]
+    mload ms2, tile_B[:,0] 
+	for i in range (T):                                       #T is a hardware constant 
+        outer acc00 ms1 ms2      ; mload ms3, tile_A[2*i+1,:] #Compute and load in parallel
+        outer acc01 ms3 ms2      ; mload ms4, tile_B[:,2*i+1] #Compute and load in parallel
+        outer acc10 ms1 ms4      ; mload ms1, tile_A[2*i+2,:] #Compute and load in parallel
+        outer acc11 ms3 ms4      ; mload ms2, tile_B[:,2*i+2] #Compute and load in parallel
+
+```
+
+ Total #cycles = 4T, but this  micro-kernel computes dot product of 2T x 2T tiles, which is equivalent of 8T3 operations . 
+
+Average throughput =$8T^3/4T = 2T^2$   ops/cycle. 
+
+**This is the max throughput we could have achieved with a TxT MAC array.** 
+
+However, to achieve this throughput we had to use 4 times the number of accumulators. This is the die area cost we have to pay to get high performance.
+
+
+
+
+
+For a frequency ***F*** this architecture gives us peak performance of $2T^2 * F$ INT8 TOPS. 
+
+For e.g. with MLEN = 512, SEW=8, Freq=2 GHz, we get 
+
+$T = 512/8 = 64$
+
+$Peak Perf = 2 * 64 * 64 * 2GHz = 16 TOPS$ 
 
  
 
-**Method1: Inner Product**: Use Inner Product method and extend the parallelization to two dimensions. We also set tile size to match with the matrix panel size on MPU. Let’s assume square tiles of size TxT.
+> For rest of this book we will assume outer product based MPU for performance analysis.
 
  
 
-`for m=0:M:T` 
-  `for n=0:N:T                           
-    for k=0:K:T`  
-
-​     `tile_A = A[m:m+T,k:k+T]`   
-
-​     `tile_B = B[k:k+T, n:n+T]`   
-
-​     `C[m:m+T,n:n+T] = tiled_inner_product(tile_A, tile_B)`   
-
-​                    
-
-*tiled_inner_product* is computed row by row, taking the inner product of a row of A, with multiple columns of B. 
-
-  
-
-`f`or x=0:T` 
-  C_tile[x] += inner(tile_A[x], tile_B)`   
-
-​                     
-
-*A[x]* is the xth row of tile A. “*inner*” is a **vector-matrix** dot product function which is done on an Inner-Product based MPU hardware in a single cycle. The output C_tile is generated row by row. The entire tile is computed in T cycles. Thus 2T^3 arithmetic operations are done in T cycles, resulting in a speedup of 2T^2.
-
-> **Need to double check : In this method, to compute T outputs, MPU needs to load 1 row of A and T columns of B, each of size T elements. This is repeated T times to compute the tile. Thus, total number of loads per tile = T*(T+T2) = T2 + T3**
-
-Not bad, but can we do better?
-
-
-
-**Option 2: Outer Product**: 
-
-Now let’s take the outer product method and extend the parallelization to two dimensions, as follows
+> We assumed square TxT tiles here, but we can generalize it to MxK and KxN inputs and MxN outputs. MAC array will be of size MxN, giving a throughput of $2*M*N$ ops/cycle. Do note that this is independent of K. This will be important when we map other operations (like Conv2d) to MPU.
 
  
 
-`for m=0:M:T` 
-  `for n=0:N:T                           
-    for k=0:K:T`  
 
-​     `tile_A = A[m:m+T,k:k+T]`   
-
-​     `tile_B = B[k:k+T, n:n+T]`   
-
-​     `C[m:m+T,n:n+T] = tiled_outer_product(tile_A, tile_B)`   
-
-​                    
-
- 
-
-*tiled_outer_product* is computed step by step for all the elements in the tile, taking the outer product of **one** **column of tile_A**, **with one row of tile_B**. 
-
- 
-
-`f`or x=0:T` 
-  C_tile += outer(tile_A[:,x], tile_B[x,:])`   
-
-
-
- *A[:,x]* is the xth column of tile A. *B[x,:]* is the xth row of tile B. “*outer*” is a vector-vector outer product function which is done on an Outer-Product based MPU hardware in a single cycle. This generates TxT partial outputs which are accumulated for all values of x. The entire tile is computed in T cycles. Thus 2T^3 arithmetic operations are done in T cycles, resulting in a speedup of 2T^2. Same as inner product method.
-
- 
-
-Then what’s the difference?
-
-> Need to double check : The difference lies in the number of loads. Every iteration of the loop requires 2T loads. This is repeated T times for a total of T2 loads. Significant improvement from T2 + T3 in case of IME. 
->
->  	
-
-As always, nothing comes for free. Outer product requires TxT accumulator array, which can be quite costly for large T values. This method has a higher overhead, but it gives system designers to create a high performance NPU with balanced load/store with compute. Therefore it is a good choice for high performance AI accelerators.
-
-For rest of this book we will assume outer product based MPU for performance analysis. 
-
-> TBD : Balanced load/store with compute analysis
-
- 
 

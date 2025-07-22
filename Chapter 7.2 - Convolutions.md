@@ -38,21 +38,19 @@ Convolution is the most computationally expensive operation in a neural net.
 
 2D Convolution can be viewed as a 7-level nested for loop
 
-`for n=0:batchsize`
 
-  `for cout=0:Co`
 
-​    `for cin=0:Ci`
-
-​      `for h=0:Ho`
-
-​        `for w=0:Wo`
-
-​          `for k_v = 0:ky`
-
-​            `for k_h = 0:kx`
-
-​              `O[n][co][h][w] += kernel[co][ci][k_h][ k_w] * input[n][ci][ h + k_h][ w + k_w]]`
+```
+ for n in range (batchsize):
+   for cout in range(Co):
+     for cin in range (Ci):
+       for h in range (Ho):
+         for w in range(Wo):
+           for k_v in range(ky):
+             for k_h in range(kx):
+               O[n][co][h][w] += kernel[co][ci][k_h][ k_w] * input[n][ci][ h + k_h][ w + k_w]]           
+         
+```
 
 
 
@@ -107,38 +105,87 @@ If 100% PE utilization is achievable, where is the problem? The expansion step i
 There is a proposed **[implicit im2col](https://arxiv.org/abs/2110.03901)** method, but we leave to the reader to explore it.
 
 
-
-#### **Conv2D using Outer Product**
+#### **Conv2D using Dot Products**
 
 We are all engineers. Why not jump right into the pseudocode.
 
 ```
- for i=0:Ho                           
-    for j=0:Wo:T                 
-        for cout=0:Co:T
-            for k_v = 0:k
-                 for k_h = 0:k
-                       input_slice = input[i+y, j:j+T] #input vector of length T elements
-                       kernel_slice = kernel[y, x, cout*T:(cout+1)T] #weight vector of length T elements
-                       ACC += outer(input_slice, kernel_slice) #Vector - Vector Outer Product and accumulation
-            out_tile[i,j] = ACC #Write TxT convolution result to output tensor
+def conv_nhwc(in_tensor, wt_tensor):
+    N,H_in,W_in,C_in = in_tensor.shape
+    k,_,_,C_out = wt_tensor.shape
+
+    num_cycles = 0
+
+    H_out = H_in-k+1                      #Height of output channel
+    W_out = W_in-k+1                      #Width of output channel
+
+    for n in range(N):
+      for y in range(H_out):
+        for i in range(k):
+          for j in range(k):
+            for c_out in range(0,C_out,T):                                      #parallelization dim2
+              for x in range(0,W_out,T):                                        #parallelization dim1
+		        for c_in in range(0,C_in,T):
+		          in_tile = in_tensor[n,y+i,x+j:x+j+T,c_in:c_in+T]              #input tile of size TxT
+		          wt_tile = wt_tensor[i,j,c_in:c_in+T,c_out:c_out+T]            #input tile of size TxT
+		          out_tile, cycles_opa = tiled_dot_product(in_tile, wt_tile)    #output tile of size TxT
+              out[n,y,x:x+Ty,c_out:c_out+Tx] += out_tile
+            
 ```
 
- T is the tile size of matrix MAC array 
+T is the tile size of matrix MAC array, and is a hardware constant. 
 
-The inner loop loads T elements from the input and T elements from weight matrix. The tensor layout assumed here is NHWC (as discussed in chapter 6), which means that  the input tensor is laid out "channel-wise". 
+N=batch size and can be assumed to be 1 for law latency edge AI inferencing.
+
+ 
+
+Convolution is computed by dividing the input tensor and weight tensor into tiles as follows
+
+- Input tile is of size T x T.  It uses the last two dimensions in NHWC layout i.e. W and C. If C_in <= T, each tile contains $T^2$ elements which are physically contiguous in memory. Hence, we can use unit-stride load without any drop in performance. What happens if C_in > T? Hold on to that question, we will come back to it.
+- Weight tile is also of T x T. The two dimensions it uses are C_in and C_out. Here also If C_in <= T, each tile contains $T^2$ elements which are physically contiguous in memory.
+- Output tile generated is also in NHWC layout. The last two dimensions are W and C. Therefore, if  C_out <= T the computed tile can be written back to memory with unit-stride.
 
 
 
+This gives us a highly efficient 2D Convolution. On an Outer-Product based MPU (as discussed in chapter 7.1 ) , this allows us to achieve **100% MAC array utilization** without any im2col like transformation, as long as
 
+- W_out is a multiple of T
 
-Important thing to note is that we have chosen the dimensions Wo and Co for parallelization. On an Outer-Product based MPU, this allows us to achieve **100% MAC array utilization** without any im2col like transformation, as long as
-
-- Wo is a multiple of T
-
-- Co is a multiple of T
+- C_out is a multiple of T
 
   
+
+if these rules are not followed, convolution still works and generates the correct output. However, the loop will have a tail which will work on small tiles. For the tail, MAC array utilization will be <100%. For e.g. if convolution is done on 224x224x3 image, W_out (after padding) = 224. If MAC array width is 64, Conv2d kernel processes along Width dimension in chunks of 64, 64, 64 and 32. For the last iteration of the loop, $utilization = 32/64 = 50\%$. This takes total utilization for the layer down to $224/(4*64) = 87.5\%$
+
+
+
+Similarly, if a Conv2d layer has 96 filters (C_out=96_ and ) MAC array height = 64, $utilization = 96/(2*64) = 75\%$
+
+If both the width and channel dimensions are not aligned to MAC array geometry, then the utilization factors will multiply. For e.g. if 
+
+- W_out = 224
+- C_out = 96
+- MAC Array is 64x64
+
+$Utilization = 87.5\% * 75\% = 65.625\%$ 
+
+
+
+Low utilization results in lower performance, while we are still incurring the hardware cost and power consumption. Therefore, a good NPU shall achieve not only high TOPS spec, but also high utilization of those TOPS.  
+
+If the MAC array size is increased to 256x256, the utilization for this layer decreases to $(224/256) x (96/256) = 32.81\%$. This shows that bigger MAC arrays result in high TOPS spec, but may have poor utilization if workload is not matched to MAC array size.
+
+
+
+> Do note that MAC array utilization does not depend on C_in. This is important because in most CNNs, the first layer has only 1 input channel (grayscale image) or 3 input channels (RGB/YUV image). If MAC utilization depended on C_in, then the first layer would have had very low utilization for large MAC arrays needed by high performance NPUs. This is one of the strengths of the OPA based Matrix Accelerator.    
+
+
+
+
+
+### **What happens if C_in or C_out is too big?**
+
+In this case, we use NCHWc layout. ***More details : TBD***
 
  
 
@@ -150,6 +197,113 @@ So far we have considered the simplest form of Conv2d. There are some variations
 
 #### **Pointwise Convolutions**
 
-The only difference is that the kernel is of size 1x1xCi. Has no impact on performance.
+The only difference is that the kernel size, k = 1. Has no impact on performance. The middle loops will run execute just once. 
+
+         for i in range(k):
+          for j in range(k):
+
+We are not exploiting any parallelism in this dimension, and therefore there is no loss in performance.
+
+
+
+#### **Strided Convolutions**
+
+In regular convolution, kernel slides one element at a time. Strided convolutions have additional parameters $s_x$ and $s_y$ which make the kernel slide by a larger offset. It requires  $s_x$ * $s_y$  fewer computations and results in the output image being downsampled by  $s_x$ * $s_y$ . The challenge is the required input elements are not contiguous in memory. We need to skip $s_x-1$ elements after reading every element in input tensor and we can not use unit-stride load instructions. 
+
+This is a load problem more than a compute problem. RISC-V matrix extension supports instruction *mlsae* for strided load of A matrix. This instruction selectively pick the required operands from memory to registers. Once the operands are in registers, convolution operation will be done as normal. The performance impact comes from load operation. Strided loads are slower than unit-stride loads by a factor of s. If load bandwidth is on the critical path, it may stall the MPU and cause performance degradation.
+
+
+
+#### **Dilated Convolutions**
+
+In dilated convolution, the kernel has "holes" which increases it's receptive field. For e.g. a 3x3 filter with dilation=2, acts as a 5x5 filter with 16 zeros. One way to implement is to run it as a 5x5 convolution. Recall that the number of ops a Conv2d layer requires is *2\* k\*k \*Ci \* Co \* Wo\*Ho* 
+
+Therefore, a 5x5 convolution takes 25/9 = 2.77 times more ops than a 3x3 convolution. It is faster to execute it as a 3x3 convolution, but skip the input elements which are going to be multiplied with zeros in the original 5x5 filter.
+
+This can also be solved by strided load. There is a performance impact, but overall it will be faster than running it as a 5x5 convolution.  
+
+
+
+#### **Grouped Convolutions**
+
+Grouped convolutions were originally introduced in ALexNet, with the following benefits
+
+1. Filter groups allowed more efficient model-parallelization across the GPUs
+2.  Grouped convolutions learn better representations
+
+Regular convolution convolves each of Co filters across *all the input channels* and concatenates the results to generate Co output channels. In a grouped convolution, input channels and filters are divided into *g* groups. Each group of input channels (of size Ci/g) is convolved with Co/g filters. 
+
+
+
+![Convolutional Layer with Filter Groups](https://blog.yani.ai/assets/images/posts/2017-08-10-filter-group-tutorial/filtergroups2.svg)
+
+​						*Source : https://blog.yani.ai/assets/images/posts/2017-08-10-filter-group-tutorial/filtergroups2.svg*
+
+
+
+Interestingly, it also results in reduced number of parameters and MAC operations. 
+
+|              | **Standard  Convolution** | **Grouped  Convolution** |
+| ------------ | ------------------------- | ------------------------ |
+| # Parameters | $Co*Ci*k^2$               | $(Co/g)*Ci*k^2$          |
+| #MACs        | $Co*Ci*k^2*Wo*Ho$         | $(Co/g)*(Ci/g)*k^2)*g$   |
 
  
+
+Each group has $g^2$ fewer MACs than the original convolution, and there are *g* such groups. Hence, the overall MAC count goes down by a factor of *g*.
+
+ 
+
+**Does this mean inference time of a grouped convolution should be *g* times lower? Not necessarily.** Recall that while accelerating conv2d on MPU, we used Co as one of the parallelization dimensions. This works well if Co is a multiple of matrix MAC array dimension. In grouped convolution, MAC array utilization will be low if (Co/g) does not comply with this. Consider the following scenario:
+
+ 
+
+·     Co = 128
+
+·     Matrix MAC Array = 64x64
+
+·     Number of groups, g = 4
+
+In regular convolution, weight tensor gets divided into two tiles of 64 channels each which fully utilizes the X dimension of MAC array.
+
+ 
+
+In grouped convolution, each group has 128/4 = 32 channels. MAC array will be only 50% utilized. Therefore, total number of MACs reduces by a factor of 4, but because of 50% efficiency drop, we expect only a 2x increase in inference speed.
+
+ 
+
+For larger MAC arrays the utilization will be even lower. For e.g. 128x128 MAC will achieve 100% utilization on regular conv2d but only 25% on grouped convolution in the scenario above. **This is another example where high “TOPS” spec does not convert to high throughput in real world usecases.**
+
+
+
+#### **Depthwise Convolutions**
+
+ Depthwise convolution treats each input channel separately. It applies a different filter to each channel. It can be seen a special case of grouped convolution where number of groups, $*g* = C_i$. Number of filters per group = $C_o/C_i$
+
+MAC array utilization goes too low.
+
+What can be done about it: TBD?
+
+
+
+#### **Depthwise Separable Convolutions**
+
+ Logically a two-step process – depthwise convolution, followed by a pointwise convolution.
+
+ 
+
+What can be done about it: TBD?
+
+
+
+#### **Point-Wise Convolution with Residual input layer**
+
+ 
+
+What can be done about it: TBD? . < https://software-dl.ti.com/mctools/nnc/mcu/users_guide/layer_configs.html >
+
+
+
+#### **Transposed Convolutions**
+
+ TBD
