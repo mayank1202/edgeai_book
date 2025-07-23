@@ -278,11 +278,11 @@ For larger MAC arrays the utilization will be even lower. For e.g. 128x128 MAC w
 
 #### **Depthwise Convolutions**
 
- Depthwise convolution treats each input channel separately. It applies a different filter to each channel. It can be seen a special case of grouped convolution where number of groups, $*g* = C_i$. Number of filters per group = $C_o/C_i$
+ Depthwise convolution treats each input channel separately. It applies a different filter to each channel. It can be seen a special case of grouped convolution where number of groups, $g = C_i = C_o$. 
 
-MAC array utilization goes too low.
+Every group has only 1 filter. MAC array utilization goes too low.
 
-What can be done about it: TBD?
+This is one of the rare scenarios where im2col maybe a good idea.
 
 
 
@@ -292,7 +292,19 @@ What can be done about it: TBD?
 
  
 
-What can be done about it: TBD?
+![Comparison of a normal convolution and a depthwise separable convolution. a) Standard convolution with a 3x3 kernel and 3 input channels. The projection of one value is shown from the 3x3x3 (dark blue) input values to 6 colorful outputs which would be 6 output channels. b) Depthwise separable convolution with a 3x3 kernel and 3 input channels. First a depthwise convolution projects 3x3 pixels of each input channel to one corresponding output pixel (matching colors). Then a pointwise convolution uses these 3 output pixels to determine the 6 final output pixels.](https://www.paepper.com/blog/posts/depthwise-separable-convolutions-in-pytorch/depthwise-separable-convolution.png)
+
+​					Comparison of a normal convolution and a depthwise separable convolution
+
+Image Source: https://www.paepper.com/blog/posts/depthwise-separable-convolutions-in-pytorch/depthwise-separable-convolution.png
+
+
+
+
+
+**Can we do something smarter than two convolutions back to back? How can they be merged? **
+
+
 
 
 
