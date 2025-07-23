@@ -287,9 +287,85 @@ $Peak Perf = 2 * 64 * 64 * 2GHz = 16 TOPS$
 
  
 
+## **Transposed GeMM on MPU** 
+
+Transposed GeMM is the operation $C = A.B^\intercal$. A and B matrices have the same dimensions MxN. Output is of size MxM.
+
+This is used heavily in Transformer's attention layer. Recall
+
+​				$$ \text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V $$ 
 
 
-### **System Level Performance Analysis**
+
+Naive way of doing it is
+
+1.  Load Matrix $B$ from memory. 
+2. Transpose by reading row-wise and writing column-size.
+3. Store $B^\intercal$ back in memory
+4. Load $A$ and $B^\intercal$ tile by tile and do GeMM as explained in the previous section.
+
+
+
+However, there is a smarter way of doing it
+
+1. Load $A$ and $B$ tile by tile  
+
+2. Compute a transposed tile dot product, as follows
+
+   1. Load a column of A tile.
+   2. Load a column of B tile. In regular GeMM, we load a row of B tile. This is the step which makes all the difference.
+   3. Compute outer product
+   4. Store C tile
+
+   
+
+This is how big matrices are divided into TxT tiles. 
+
+```
+ for m in range (0,M,T):
+    for n in range (0,M,T):   							                #Output is MxM. This is not a typo
+        for k in range (0,N,T):
+           tile_A = A[m:m+T,k:k+T]
+           tile_B = B[k:k+T, n:n+T]
+           tile_C += tiled_transposed_outer_product(tile_A, tile_B)    #This is the modified kernel. Pseudocode follows
+        C[m:m+T,n:n+T] = tile_C
+           
+```
+
+*tiled_transposed_dot_product* is the micro-kernel running on the MPU, computing the dot product of $tile_A, tile_B^\intercal$\. 
+
+
+
+```
+def tiled_transposed_outer_product(tileA, tileB):
+
+    T = tileA.shape[0]
+    C_tile = np.zeros((T,T), dtype=tileA.dtype)
+
+    for x in range(0,T):
+        A_col = tileA[:,x]  #xth col of A tile
+        B_col = tileB[:,x]  #xth row of B tile
+
+        #Vector - Vector outer product
+        C_tile += np.outer(A_col, B_col)
+
+    return C_tile
+           
+```
+
+
+
+**Voila!!!!!!!!!!!... we are able to do transposed dot product with no extra computations or memory access.**
+
+#### **Transformers.... here we come.** 
+
+
+
+
+
+
+
+## **System Level Performance Analysis**
 
 We have seen the micro-kernel performance and how it is impacted by load/store bandwidth. Peak performance of  $2T^2$  ops/cycle  can be achieved only  if Matrix LSU can load operands at T elements per cycle. For the 16 INT8 TOPS NPU (T=64, F=2GHz), we need memory bandwidth of 128 Gigabytes/s. This is very high and is impractical to achieve if the matrices reside in external memory (DDR). Therefore, moving memory is a two-step process
 
