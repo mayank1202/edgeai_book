@@ -197,7 +197,7 @@ So far we have considered the simplest form of Conv2d. There are some variations
 
 #### **Pointwise Convolutions**
 
-The only difference is that the kernel size, k = 1. Has no impact on performance. The middle loops will run execute just once. 
+The only difference is that the kernel size, k = 1. Has no impact on performance. The middle loops will run just once. 
 
          for i in range(k):
           for j in range(k):
