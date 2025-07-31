@@ -224,9 +224,27 @@ This can also be solved by strided load. There is a performance impact, but over
 
 
 
+#### **Deformable Convolutions**
+
+Dilated convolutions expand the receptive field by adding ***fixed*** offsets between input elements. In deformable convolutions, the offsets are not fixed but ***generates*** them from input features using learnable parameters. This allows the convolutional filter to adapt its shape and size dynamically, focusing more effectively on relevant features. 
+
+<img src="https://viso.ai/wp-content/uploads/2024/04/simple-convolution-vs-deformable.png" alt="image of simple-convolution-vs-deformable" style="zoom:50%;" />
+
+To perform a deformable convolution, we must fetch all the input elements before we convolve with the filters. In dilated convolution we were able to do by using strided loads. Deformable convolutions are trickier than that. 
+
+1. First, we a run small CNN to generate offsets for every output element. Offsets can be seen as displacement vectors $\Delta x$ and $\Delta y$, for every x, y output location. 
+2. In step1, we get a grid of offsets for every output element. This is essentially a geometric transformation with the grid acting as a back-mapping lookup table.  $\Delta x$ and $\Delta y$, maybe fractional which means we need to interpolate between elements at integer locations. For those familiar with Computer Vision and Image Signal Processing, this is similar to an LDC operation. This operation does not map to matrix accelerator. VPU is the most suitable accelerator to do it via table lookup (permute instructions). For every output, 4 inputs need to be accessed, followed by a bilinear interpolation. 
+3. After step2, we get the "deformed" representation of input elements. We can now run the regular convolutional kernel on this representation. 
+
+
+
+Deformable convolutions have fewer MACs, but step2 is a costly operation in terms of computations as well as memory access. Also, step2 does not execute on MPU, so it tends to get slower and may become the bottleneck. Therefore, it must be chosen wisely.  
+
+
+
 #### **Grouped Convolutions**
 
-Grouped convolutions were originally introduced in ALexNet, with the following benefits
+Grouped convolutions were originally introduced in AlexNet, with the following benefits
 
 1. Filter groups allowed more efficient model-parallelization across the GPUs
 2.  Grouped convolutions learn better representations
@@ -319,3 +337,62 @@ What can be done about it: TBD? . < https://software-dl.ti.com/mctools/nnc/mcu/u
 #### **Transposed Convolutions**
 
  TBD
+
+
+
+
+
+
+
+## **Performance Analysis** (Outer Product)
+
+MPU Matrix Array = TxT MAC units
+
+Vector LEN = VL (bits)
+
+ SEW is element width (bits)
+
+2 * padding - dilation * (kernel - 1)
+
+Input : Hi x Wi x Ci
+
+Weights : k x k x Ci x Co
+
+Output: Ho x Wo x Co
+
+$W_o = (W_i + 2**pad - dilation*(k-1) - 1)/stride + 1$
+
+$H_o = (H_i + 2**pad - dilation*(k-1) - 1)/stride + 1$$
+
+
+
+To compute one output, we need to read $k^2*C_i$ elements from input and same number of elements from weights. There are Ho x Wo x Co elements to be computed.
+
+
+
+|      | Operation          | #Params                                          | #OPs                                       | MPU cycles                                 | VPU Cycles                      | Scalar Cycles | Memory R/W (Bytes)                             | Comments                                                     |
+| ---- | :----------------- | ------------------------------------------------ | ------------------------------------------ | ------------------------------------------ | ------------------------------- | ------------- | ---------------------------------------------- | ------------------------------------------------------------ |
+| 1    | Conv2d             | $k^2*C_i*C_o$                                    | $2*k^2*W_o*H_o*C_i*C_o$                    | $numops*(SEW)^2/(2*T)$                     | 0                               | 0             | $numops*(SEW)$                                 | Assuming input and weights have same width                   |
+| 2    | Point Wise Conv2D  | Same as Conv2d with k=1                          | Same as Conv2d with k=1                    | Same as Conv2d with k=1                    | 0                               | 0             | Same as Conv2d                                 |                                                              |
+| 3    | Strided Conv2D     | Same as Conv2d                                   | Same as Conv2d                             | Same as Conv2d                             | 0                               | 0             | Same as Conv2d                                 | MPU cycles based on the assumption that strided load is faster than compute. |
+| 4    | Dilated Conv2d     | Same as Conv2d                                   | Same as Conv2d                             | Same as Conv2d                             | 0                               | 0             | Same as Conv2d                                 | MPU cycles based on the assumption that strided load is faster than compute. |
+| 5    | Deformable  Conv2d | Conv2d Params + Offset Prediction Network Params | Conv2d Ops + Offset Prediction Network Ops | Conv2d Ops + Offset Prediction Network Ops | Grid sampling and interpolation | 0             | Conv2d Ops + Offset Prediction + Grid Sampling |                                                              |
+| 6    | Grouped Conv2d     | $(Co/g)*Ci*k^2$                                  | $2*(Co/g)*(Ci/g)*k^2)*g$                   | $numops*(SEW)^2/(2*T)$                     | 0                               | 0             |                                                |                                                              |
+| 7    | Depthwise Conv2d   | $k^2*C_o$                                        | $2*k^2*W_o*H_o*C_o$                        | $numops*(SEW)^2/(2*T)$                     | 0                               | 0             |                                                |                                                              |
+| 8    | DWS Conv2d         |                                                  |                                            |                                            |                                 |               |                                                |                                                              |
+
+If the $W_o$ and $C_o$ are multiples of T, then the convolutions can be broken down into integer number of TxT dot products resulting in 100% utilization of MAC arrays. If not, then we need to have some tile dot products with MAC arrays running partially unutilized. 
+
+For grouped convolution, we need to consider $C_o/g$
+
+
+
+Mathematically MAC array utilization can be computed as $((M*T)/ceiling((M+T-1)/T)) * ((N*T)/ceiling((N+T-1)/T))$
+
+For large values of T (big MAC arrays), it is not always possible to make M and N aligned to T and therefore MAC array runs at lower utilization. 
+
+
+
+> [!NOTE]
+>
+> The cycle count here assumes that the tiles are in L1 memory whenever MPU needs them. In a typical SoC, the big matrices reside in DDR and tiles must be moved fast enough to L1 memory. This has additional performance challenges which we will discuss in chapter 8.

@@ -24,7 +24,7 @@ In all scenarios, we will assume that A, B, C are large matrices and reside in e
 
 ####  **Inner Product Method**
 
-A GeMM operation of form C = A.B can be implemented as 3-level nested for loop, where output element {i,j} is a dot product of ith row of A and jth row of B.
+A GeMM operation of form C = A.B can be implemented as 3-level nested for loop, where output element {i,j} is a dot product of $i_{th}$ row of A and $j_{th}$ column of B.
 
 
 
@@ -44,7 +44,7 @@ The inner loop does the following
 
  
 
-After the inner loop is complete, C[m,n] is ready to be written out to memory. CPU may do a reduction or saturation to convert it to a lower data type. The inner loop is repeated for all *MxN* outputs in matrix *C*. Hence, the full loop takes M*N*K FMAs. This method is known as **Inner Product** method. It generates a single full sum at a time, with no merging of partial sums. This is fairly efficient from computation point of view, ***if\*** all load/store and other instructions can be pipelined then the runtime will be dominated by FMA cycles.
+After the inner loop is complete, C[m,n] is ready to be written out to memory. CPU may do a reduction or saturation to convert it to a lower data type. The inner loop is repeated for all *MxN* outputs in matrix *C*. Hence, the full loop takes M*N*K FMAs = 2MNK math operations. This method is known as **Inner Product** method. It generates a single full sum at a time, with no merging of partial sums. This is fairly efficient from computation point of view, ***if\*** all load/store and other instructions can be pipelined then the runtime will be dominated by FMA cycles.
 
 But that’s a big **if**. The biggest problem we see here is access pattern of matrix B resulting is an extremely high load time of B[k,n]. To understand this better, let’s note that the change variable in the inner loop is *k*, which means that for successive values of *k**,*** B[k,n] is read from a different row in the matrix. <u>*This results in highly inefficient memory access*</u> for two reasons
 
@@ -267,8 +267,6 @@ However, to achieve this throughput we had to use 4 times the number of accumula
 
 
 
-
-
 For a frequency ***F*** this architecture gives us peak performance of $2T^2 * F$ INT8 TOPS. 
 
 For e.g. with MLEN = 512, SEW=8, Freq=2 GHz, we get 
@@ -279,17 +277,15 @@ $Peak Perf = 2 * 64 * 64 * 2GHz = 16 TOPS$
 
  
 
+> [!NOTE]
+>
 > For rest of this book we will assume outer product based MPU for performance analysis.
 
- 
-
-> We assumed square TxT tiles here, but we can generalize it to MxK and KxN inputs and MxN outputs. MAC array will be of size MxN, giving a throughput of $2*M*N$ ops/cycle. Do note that this is independent of K. This will be important when we map other operations (like Conv2d) to MPU.
-
- 
+  
 
 ## **Transposed GeMM on MPU** 
 
-Transposed GeMM is the operation $C = A.B^\intercal$. A and B matrices have the same dimensions MxN. Output is of size MxM.
+Transposed GeMM is the operation $C = A.B^\intercal$. A and B matrices have the dimensions MxK and NxK. Output is of size MxN.
 
 This is used heavily in Transformer's attention layer. Recall
 
@@ -322,14 +318,15 @@ However, there is a smarter way of doing it
 This is how big matrices are divided into TxT tiles. 
 
 ```
- for m in range (0,M,T):
-    for n in range (0,M,T):   							                #Output is MxM. This is not a typo
-        for k in range (0,N,T):
-           tile_A = A[m:m+T,k:k+T]
-           tile_B = B[k:k+T, n:n+T]
-           tile_C += tiled_transposed_outer_product(tile_A, tile_B)    #This is the modified kernel. Pseudocode follows
-        C[m:m+T,n:n+T] = tile_C
-           
+for i in range(0,M,T):
+    for j in range(0,N,T): 
+        tileC = np.zeros((T,T), dtype=A.dtype)
+        for k in range(0,K,T):
+            tileA = A[i:i+T,k:k+T]
+            tileB = B[j:j+T,k:k+T]
+            tileC += tiled_transposed_outer_product(tileA, tileB)
+
+        C[i:i+T, j:j+T] = tileC           
 ```
 
 *tiled_transposed_dot_product* is the micro-kernel running on the MPU, computing the dot product of $tile_A, tile_B^\intercal$\. 
@@ -365,45 +362,31 @@ def tiled_transposed_outer_product(tileA, tileB):
 
 
 
-## **System Level Performance Analysis**
+## **Performance Analysis** (Outer Product)
 
-We have seen the micro-kernel performance and how it is impacted by load/store bandwidth. Peak performance of  $2T^2$  ops/cycle  can be achieved only  if Matrix LSU can load operands at T elements per cycle. For the 16 INT8 TOPS NPU (T=64, F=2GHz), we need memory bandwidth of 128 Gigabytes/s. This is very high and is impractical to achieve if the matrices reside in external memory (DDR). Therefore, moving memory is a two-step process
+MPU Matrix Array = TxT MAC units
 
+Vector LEN = VL (bits)
 
-
-1. Large blocks of memory are moved from DDR to on-chip RAM. The block size chosen can be bigger than MPU tile. This is done to achieve higher efficiency on DDR channels. Please see Appendix <TBD> on DDR b/w. This data movement is usually done with the help of DMA engines so that CPU can be offloaded.
-
-   
-
-2. MPU consumes this data tile-by-tile. As we have seen before, it will use matrix/vector LSU to move the tiles into register files. 
-
-   
-
-3. In the micro-kernel, we had pipelined LSU and MAC to achieve parallelization. Similar parallelization can also be achieved between DMA and MPU at system level. This is usually done through a software managed pipeline as follows
-
-   
-
-   
-
-**Ramp-up** 
-
-	1. DMA-In tile #0
-	2. DMA-In tile #1
+ SEW is element width (bits)
 
 
 
-**Steady State** 	
+|      | Operation                   | #OPs      | MPU cycles            | VPU Cycles | Scalar Cycles | Memory Accesses (Bytes) | Comments                            |
+| ---- | --------------------------- | --------- | --------------------- | ---------- | ------------- | ----------------------- | ----------------------------------- |
+| 1    | GeMM (MxN).(NxK)            | $2*M*N*K$ | $(2*M*N*K)/(T/SEW)^2$ | 0          | 0             | $M*N*K*SEW/8$           | Assuming M and N are multiples of T |
+| 2    | Transposed GeMM (MxK).(NxK) | $2*M*N*K$ | $(2*M*N*K)/(T/SEW)^2$ | 0          | 0             |                         | Assuming M and N are multiples of T |
 
-	1. Process tile #i.
-	2. DMA-In tile #i+1. This will be computed when MPU is done processing tile#i.
-	3. DMA-out output tile #i-1. This was computed in previous iteration.
-
-**Ramp-down** 
-
-	1. DMA-Out tile #N-2
-	2. DMA-Out tile #N-1
+If the matrix dimensions are multiples of T, then they can be broken down into integer number of TxT tiles resulting in 100% utilization of MAC arrays. If not, then we need to have some tile dot products with MAC arrays running partially unutilized. 
 
 
 
-In steady state, MPU compute is running in parallel with Dma-In and DMA-out operations. If there is only 1 DMA engine in the SoC, then total DMA time must be less than MPU compute time to make sure MPU is never starved for data. This calls for an SoC architecture which can guarantee the DDR bandwidth required by MPU to perform at its peak.
+Mathematically MAC array utilization can be computed as $((M*T)/ceiling((M+T-1)/T)) * ((N*T)/ceiling((N+T-1)/T))$
 
+For large values of T (big MAC arrays), it is not always possible to make M and N aligned to T and therefore MAC array runs at lower utilization. 
+
+
+
+> [!NOTE]
+>
+> The cycle count here assumes that the tiles are in L1 memory whenever MPU needs them. In a typical SoC, the big matrices reside in DDR and tiles must be moved fast enough to L1 memory. This has additional performance challenges which we will discuss in chapter 8.

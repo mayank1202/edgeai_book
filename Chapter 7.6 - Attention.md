@@ -1,18 +1,18 @@
-# Chapter 7.6 - Attention on NPU
+# Chapter 7.6 - Attention Mechanisms on NPU
 
 [TOC]
 
 
 
-## **Attention**
+## **Self-Attention**
 
-Attention, defined below is the cornerstone of Transformer networks
+Self-Attention, also known as Scaled Dot Product Attention, defined below is the cornerstone of Transformer networks
 
 ​				$$ \text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V $$ 
 
 
 
-In chapter 7.1, we briefly touched upon how ${Q.K^T}$ is done efficiently using transposed dot product. In this chapter we will look at more details and additional challenges.  Finally we will look at different types of attention and wrap up with a performance analysis. 
+In chapter 7.1, we briefly touched upon how ${Q.K^T}$ is done efficiently using transposed dot product. In this chapter we will look at more details and additional challenges.  Finally we will look at different types of attention and wrap up with a performance analysis.
 
 
 
@@ -137,6 +137,27 @@ def mpu_flash_attention(Q,K,V, tile_size):
    - Dot products are done on MPU
    - Softmax done on VPU
    - The two operations can be pipelined so that the longer pole determines the throughput. Usually, softmax can be completely hidden behind dot products.
+
+
+
+
+
+## **Cross-Attention**
+
+Very similar to Self-Attention, with a slight twist
+
+- self-attention computes the interactions between the different elements of an input sequence.
+- cross-attention computes the interactions between the elements of 2 different input sequences.
+
+
+
+From a computation point of view, the only difference is that we can no longer assume $d_q = d_v = d_k$.  Well, $d_q$ is still = $d_v$, but $d_k$ can be different.
+
+It does not change the execution flow and does not introduce any other complexity. Self-Attention implementation can be reused. 
+
+
+
+
 
 
 
