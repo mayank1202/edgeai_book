@@ -8,13 +8,9 @@
 
 Let's start with the simplest of them all.
 
-$**f(x) = max(0,x)**$
+​		$f(x) = max(0,x)$
 
-This is essentially a saturation operation.
-
-
-
-ReLu is usually preceded with a GeMM or a Convolution operation. As we have seen in chapters 7.1 and 7,2  GeMM and Convolutions are broken down into tiled_dot_products which are further broken down into multiply-accumulate instructions. Usually, dot product accumulation results in widening of data type. Before writing to memory, the accumulated results must be narrowed back into original precision. RISC-V matrix supports reduction instructions which can also do rounding and saturation. 
+ReLu is usually preceded with a GeMM or a Convolution operation. As we have seen in chapters 7.1 and 7.2  GeMM and Convolutions are broken down into tiled_dot_products which are further broken down into multiply-accumulate instructions. Usually, dot product accumulation results in widening of data type. Before writing to memory, the accumulated results must be narrowed back into original precision. RISC-V matrix supports reduction instructions which can also do rounding and saturation.
 
 
 
@@ -52,6 +48,8 @@ Option#1 is the most future-proof, but is also the slowest.
 
 Option#2 seems to be the most well balanced approach, but it has it's pros and cons:
 
+
+
 **Pros of Lookup Table approach**
 
 1. Future Proof - Any activation function can be computed offline and stored in memory
@@ -62,7 +60,7 @@ Option#2 seems to be the most well balanced approach, but it has it's pros and c
 **Cons of Lookup Table approach** 
 
 1. Vector permute instructions are slower than math instructions. However, it is still expected to be faster than scalar. 
-2. For higher precision modes, lookup table can be quite big and may not fit in SRAM/TCM. Workaround for this is to keep the tables small and interpolate between adjacent entries. As can be seen in the table above, all the activation functions have a linear shape in a small range, because of which a simple linear interpolation would give good results.
+2. For higher precision modes, lookup table can be quite big and may not fit in on-chip RAM. Workaround for this is to keep the tables small and interpolate between adjacent entries. As can be seen in the table above, all the activation functions have a linear shape in a small range, because of which a simple linear interpolation would give good results.
 
 
 
@@ -71,5 +69,3 @@ Option#2 seems to be the most well balanced approach, but it has it's pros and c
 To get best performance, it is a good practice to modify NN graph to use ReLu as much as possible during inferencing. Other activations are very useful in training, but at inference time their benefits are limited and most of them can be replaced with ReLu with minimal loss to accuracy. 
 
 
-
-## 
